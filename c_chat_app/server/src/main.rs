@@ -2,9 +2,14 @@ use std::io::{ErrorKind, Read, Write};
 use std::new::TcpListener;
 use std::sync::mpsc;
 use std::thread;
+use std::time::Duration;
 
 const LOCAL: &str = "127.0.0.1:6000";
 const MSG_SIZE: usize = 32;
+
+fn sleep() {
+    thread::sleep(Duration::from_millis(100));
+}
 
 fn main() {
     let server = TcpListener::bind(LOCAL).expect("Listener failed to bind");
@@ -32,9 +37,29 @@ fn main() {
                             println!("{}: {:?}", addr, msg);
                             tx.send(msg).expect("failed to send msg to rx");
                         }
+                        Err(ref err) if err.kind() == ErrpoKind::WouldBlock => (),
+                        Err(_) => {
+                            println!("closing connection with: {}", addr);
+                            break;
+                        }
                     }
+                    sleep();
                 }
             })
         }
+
+        if let Ok(msg) = rx.try_recv() {
+            clients = clients
+                .into_iter()
+                .filter_map(|mut client| {
+                    let mut buff = msg.clone().into_bytes();
+                    buff.resize(MSG_SIZE, 0);
+
+                    client.write_all(&buff).map(|_| client).ok()
+                })
+                .collect::<Vec<_>>();
+        }
+
+        sleep();
     }
 }
