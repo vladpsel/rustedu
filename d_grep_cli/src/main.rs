@@ -8,5 +8,6 @@ fn main() {
         process::exit(0);
     });
 
-    app.find();
+    let finded = app.find();
+    println!("{:?}", finded);
 }
