@@ -43,7 +43,8 @@ impl Config {
     }
 
     pub fn find(&self) {
-        let file = fs::read_to_string(&self.files_path).unwrap();
+        let file = fs::read_to_string(&self.files_path).expect("Unable to read the file");
+
         println!("{}", file);
     }
 }
