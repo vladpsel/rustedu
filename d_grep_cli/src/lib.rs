@@ -29,10 +29,16 @@ impl Config {
 
         if flag == "-i" || flag == "--ignore-case" {
             case_ignore = true;
+            return Ok(Self {
+                flag,
+                files_path: args[1].clone(),
+                search: args[2].clone(),
+                case_ignore,
+            });
         }
 
-        let files_path = args[2].clone();
-        let search = args[3].clone();
+        let files_path = args[1].clone();
+        let search = args[2].clone();
 
         Ok(Self {
             flag,
@@ -42,9 +48,23 @@ impl Config {
         })
     }
 
-    pub fn find(&self) {
-        let file = fs::read_to_string(&self.files_path).expect("Unable to read the file");
+    pub fn find(&self) -> Vec<String> {
+        let rows = fs::read_to_string(&self.files_path).expect("Unable to open file");
+        let mut res = Vec::new();
+        let query = &self.search;
 
-        println!("{}", file);
+        for line in rows.lines() {
+            if self.case_ignore {
+                if line.to_lowercase().contains(query) {
+                    res.push(line.to_string());
+                }
+            } else {
+                if line.contains(query) {
+                    res.push(line.to_string());
+                }
+            }
+        }
+
+        res
     }
 }
